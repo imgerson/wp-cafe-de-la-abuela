@@ -36,4 +36,4 @@ jobs:
             ${{ secrets.USER }}@${{ secrets.HOST }}:html/wp-content/mu-plugins/
             
       - name: Clear MWP's Cache
-        run: ssh ${{ secrets.STAGING_USER }}@${{ secrets.HOST }} "cd html; wp godaddy cache flush"
+        run: ssh ${{ secrets.USER }}@${{ secrets.HOST }} "cd html; wp godaddy cache flush"
