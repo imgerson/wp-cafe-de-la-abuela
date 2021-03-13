@@ -1,0 +1,39 @@
+name: Continuous Deployment
+
+# Trigers when "main" branch is updated.
+on:
+  push:
+    branches: [ main ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  deployment:
+    runs-on: Ubuntu-20.04
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE
+      - uses: actions/checkout@v2
+
+      - name: Cancel past actions
+        uses: styfle/cancel-workflow-action@0.6.0
+        with:
+          access_token: ${{ github.token }}
+
+      - name: Setup SSH
+        run: |
+          eval `ssh-agent -s`
+          mkdir ~/.ssh/
+          ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-add ~/.ssh/id_rsa
+
+      - name: Copy MU Plugin to Staging
+        run: |
+          scp $GITHUB_WORKSPACE/cafe-abuela-custom.php \
+            ${{ secrets.USER }}@${{ secrets.HOST }}:html/wp-content/mu-plugins/
+            
+      - name: Clear MWP's Cache
+        run: ssh ${{ secrets.STAGING_USER }}@${{ secrets.HOST }} "cd html; wp godaddy cache flush"
